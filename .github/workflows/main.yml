@@ -39,7 +39,7 @@ jobs:
 
       - name: Run tests for intro topic
         run: |
-          conda run -n python-exercises pytest course/intro/tests --ignore=intro/tests/test_db_connection.py | fold -s -w 72 | tee intro_tests_output.txt
+          conda run -n python-exercises pytest course/intro/tests --ignore=course/intro/tests/test_db_connection.py | fold -s -w 72 | tee intro_tests_output.txt
           echo "${PIPESTATUS[0]}" > intro_tests_status.txt
 
       - name: Run flake8 linter for intro topic
