@@ -1,84 +1,77 @@
-import pandas as pd
 from pathlib import Path
-from course.unsupervised_classification.visual_eda import (
-  summary_stats, generate_raw_boxplot, generate_scaled_boxplot, generate_scatterplot)
+import pandas as pd
+
+
+from course.intro.pipeline_functions import (
+  tyler_viglen, calculate_correlation, filter_data,
+  fit_regression, plot_scatter)
 
 
 def task_check_cache():
     def check_cache():
         """Check cache folder exists"""
-        models_path = Path("data_cache/models")
+        models_path = Path("course/intro/cache/")
         models_path.mkdir(parents=True, exist_ok=True)
     return {
       'actions': [check_cache]
     }
 
 
-def task_check_vignettes():
-    def check_vignettes():
-        """Check cache folder exists"""
-        vignettes_path = Path("vignettes/unsupervised/cache")
-        vignettes_path.mkdir(parents=True, exist_ok=True)
+def task_generate_data():
+    def generate_data():
+        df = tyler_viglen()
+        df.to_csv('course/intro/cache/data.csv', index=False)
     return {
-      'actions': [check_vignettes]
+        'actions': [generate_data],
+        'targets': ['course/intro/cache/data.csv'],
     }
 
 
-def task_load_data():
-    def load_data():
-        df = pd.read_csv('data/olive_oil.csv')
-        df_reduced = df.iloc[:, 3:]
-        df_reduced.to_csv('data_cache/unsupervised.csv', index=False)
+def task_filter():
+    def filter():
+        df = pd.read_csv('course/intro/cache/data.csv')
+        df = filter_data(df, 2015)
+        df.to_csv('course/intro/cache/filtered_data.csv', index=False)
     return {
-        'actions': [load_data],
-        'file_dep': ['data/olive_oil.csv'],
-        'targets': ['data_cache/unsupervised.csv'],
+        'file_dep': ['course/intro/cache/data.csv'],
+        'actions': [filter],
+        'targets': ['course/intro/cache/filtered_data.csv'],
     }
 
 
-def task_summary_stats():
+def task_correlation():
+    def correlation():
+        df = pd.read_csv('course/intro/cache/filtered_data.csv')
+        corr_coef, p_sig_corr = calculate_correlation(df, 'Kerosene', 'DivorceRate')
+        with open('course/intro/cache/correlation.txt', 'w') as f:
+            f.write(f"Correlation coefficient: {corr_coef}\\nP-value: {p_sig_corr}\\n")
     return {
-        'actions': [summary_stats],
-        'file_dep': ['data_cache/unsupervised.csv',
-                     'course/unsupervised_classification/visual_eda.py'],
-        'targets': ['vignettes/unsupervised/cache/olive_oil_summary.html'],
+        'file_dep': ['course/intro/cache/filtered_data.csv'],
+        'actions': [correlation],
+        'targets': ['course/intro/cache/correlation.txt'],
     }
 
 
-def task_plot_raw_boxplot():
+def task_regression():
+    def regression():
+        df = pd.read_csv('course/intro/cache/filtered_data.csv')
+        model = fit_regression(df, 'Kerosene', 'DivorceRate')
+        with open('course/intro/cache/regression_summary.txt', 'w') as f:
+            f.write(model.summary().as_text())
     return {
-        'file_dep': ['data_cache/unsupervised.csv',
-                     'course/unsupervised_classification/visual_eda.py'],
-        'targets': ['vignettes/unsupervised/cache/raw_boxplot.html'],
-        'actions': [generate_raw_boxplot],
-        'clean': True,
+        'file_dep': ['course/intro/cache/filtered_data.csv'],
+        'actions': [regression],
+        'targets': ['course/intro/cache/regression_summary.txt'],
     }
 
 
-def task_plot_scaled_boxplot():
+def task_scatterplot():
+    def scatterplot():
+        df = pd.read_csv('course/intro/cache/filtered_data.csv')
+        chart = plot_scatter(df, 'Kerosene', 'DivorceRate')
+        chart.write_html("course/intro/cache/scatterplot.html")
     return {
-        'file_dep': ['data_cache/unsupervised.csv',
-                     'course/unsupervised_classification/visual_eda.py'],
-        'targets': ['vignettes/unsupervised/cache/scaled_boxplot.html'],
-        'actions': [generate_scaled_boxplot],
-        'clean': True,
-    }
-
-
-def task_plot_scatterplot():
-    return {
-        'file_dep': ['data_cache/unsupervised.csv',
-                     'course/unsupervised_classification/visual_eda.py'],
-        'targets': ['vignettes/unsupervised/cache/scatterplot.html'],
-        'actions': [generate_scatterplot],
-        'clean': True,
-    }
-
-
-def task_render_quarto():
-    return {
-        'file_dep': ['vignettes/unsupervised/ict_unsupervised.qmd'],
-        'targets': ['vignettes/unsupervised/ict_unsupervised.html'],
-        'actions': ['quarto render vignettes/unsupervised/ict_unsupervised.qmd'],
-        'clean': True,
+        'file_dep': ['course/intro/cache/filtered_data.csv'],
+        'actions': [scatterplot],
+        'targets': ['course/intro/cache/scatterplot.html']
     }
