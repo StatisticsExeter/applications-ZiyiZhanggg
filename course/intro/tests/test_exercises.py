@@ -3,7 +3,7 @@ import pandas as pd
 from numpy import nan
 from ..python_exercises import (
   sum_list, max_value, reverse_string, filter_even, get_fifth_row, column_mean,
-  lookup_key, count_occurrences, list_to_string, parse_date)
+  lookup_key, count_occurrences, drop_missing, value_counts_df)
 
 
 def test_sum_list_basic():
@@ -136,36 +136,15 @@ def test_count_occurrences_case2():
     assert count_occurrences([]) == {}
 
 
-def test_list_to_string_basic():
-    # Basic test for list_to_string
-    assert callable(list_to_string)
+def test_drop_missing_removes_rows():
+    df = pd.DataFrame({'a': [1, None, 3], 'b': [4, 5, None]})
+    result = drop_missing(df)
+    assert result.shape[0] == 1
+    assert result.isnull().sum().sum() == 0
 
 
-def test_list_to_string_case1():
-    # Case 1 for list_to_string
-    assert list_to_string(['a', 'b', 'c']) == 'a,b,c'
-
-
-def test_list_to_string_case2():
-    # Case 2 for list_to_string
-    assert list_to_string([]) == ''
-
-
-def test_parse_date_basic():
-    # Basic test for parse_date
-    assert callable(parse_date)
-
-
-def test_parse_date_case1():
-    # Case 1 for parse_date
-    import datetime
-    assert parse_date('2023-01-01') == datetime.date(2023, 1, 1)
-
-
-def test_parse_date_case2():
-    # Case 2 for parse_date
-    try:
-        parse_date('invalid-date')
-        assert False
-    except ValueError:
-        assert True
+def test_value_counts_df_returns_correct_counts():
+    df = pd.DataFrame({'type': ['car', 'bike', 'car', 'bus', 'bike']})
+    result = value_counts_df(df, 'type')
+    assert set(result['type']) == {'car', 'bike', 'bus'}
+    assert result[result['type'] == 'car']['count'].values[0] == 2

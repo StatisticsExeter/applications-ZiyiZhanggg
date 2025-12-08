@@ -8,27 +8,33 @@ import plotly.express as px
 def plot_scatter(df, x_name, y_name):
     """Given a dataframe containing numeric columns specified by x_name and y_name
     return a plotly express scatterplot"""
-    return 0
+    fig = px.scatter(df, x=x_name, y=y_name)
+    return fig
 
 
 def calculate_correlation(df, x1, x2):
     """Given a dataframe containing numeric columns specified by x_name and y_name
     return two objects (numbers), the first is the pearson correlation coefficient, the second 
     the significance of this estimate"""
-    return 0
+    corr, p_value = pearsonr(df[x1], df[x2])
+    return corr, p_value
 
 
 def fit_regression(df, x_name, y_name):
     """Given a dataframe containing numeric columns specified by x_name and y_name
     return the stats models OLS fit of a regression model of y on x"""
-    return 0
+    X=df[[x_name]]
+    X = sm.add_constant(X)
+    y=df[y_name]
+    model = sm.OLS(y, X).fit()
+    return model
 
 
 def filter_data(df, year):
     """Given a dataframe of various rows including a column 'Year' and an integer year
     return a dataframe containing only those rows where the value in this column is less
     than the value of the supplied year"""
-    return 0
+    return df[df["Year"] < year]
 
 
 def tyler_viglen():

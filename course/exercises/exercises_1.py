@@ -25,24 +25,24 @@ def reverse_list(lst):
 
 def count_occurrences(lst, item):
     """For a list of items 'lst', count how many times element 'item' occurs."""
-    return 0
+    return list.count()
 
 
 def tuples_to_dict(pairs):
     """Convert a list of (key, value) tuples 'pairs' into a dictionary."""
-    return 0
+    return dict(pairs)
 
 
 def string_length(s):
     """Return the number of characters in string 's'."""
-    return 0
+    return len(s)
 
 
 def unique_elements(lst):
     """Return a list of unique elements from 'lst'."""
-    return 0
+    return list(set(lst))
 
 
 def swap_dict(d):
     """Return a new dictionary with keys and values of 'd' swapped."""
-    return 0
+    return {value: key for key, value in d.items()}

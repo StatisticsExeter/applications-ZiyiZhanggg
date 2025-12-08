@@ -7,6 +7,17 @@ def metric_report(y_test_path, y_pred_path, report_path):
     y_test = pd.read_csv(y_test_path)
     y_pred = pd.read_csv(y_pred_path)
     """Create a pandas data frame called report which contains your classifier results"""
+    acc = accuracy_score(y_test, y_pred)
+    prec = precision_score(y_test, y_pred, zero_division=0)
+    rec = recall_score(y_test, y_pred, zero_division=0)
+    f1 = f1_score(y_test, y_pred, zero_division=0)
+    
+    report = pd.DataFrame({
+        "accuracy": [acc],
+        "precision": [prec],
+        "recall": [rec],
+        "f1": [f1]
+    })
     report.transpose().to_csv(report_path, index=True)
 
 
