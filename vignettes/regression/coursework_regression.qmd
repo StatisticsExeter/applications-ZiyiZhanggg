@@ -10,50 +10,60 @@ format:
 
 
 
-## Your task
+## Introduction
 
-This material is provided as context to the problem. You should rewrite it as you see fit.
+This report examines whether local authorities differ in average CO₂ emissions after accounting for two key drivers: whether homes are pre-1930 or post-1930, and the number of heated rooms (1–10). Using an aggregated EPC dataset, I apply a mixed-effects model so that areas with older or larger housing stock are not automatically interpreted as having higher energy-related emissions.
+
 
 ## The Problem
 
-Data on [Energy Certificates](https://epc.opendatacommunities.org/) were downloaded in March 2025. These certificates are a non-random sample of UK housing, and contain information such as:
+Data on [Energy Certificates](https://epc.opendatacommunities.org/) were downloaded in March 2025. These certificates are a non-random sample of UK housing, and contain information on property energy efficiency, carbon dioxide emissions, energy costs, and recommended efficiency improvements.
 
-- Property energy efficiency: The core data is the energy efficiency rating, which ranges from A (most efficient) to G (least efficient).
-- CO2 emissions: The data includes information on the building's likely carbon dioxide emissions.
-- Energy costs: Potential costs for heating and lighting the property are provided.
-- Improvement recommendations: Each EPC lists cost-effective ways to improve the building's energy performance.
+A local company requested a comparison of average CO₂ emissions across local authorities. However, direct comparisons are potentially misleading because authorities differ in their housing stock composition, particularly in the share of older homes and the typical number of heated rooms per dwelling. To account for these differences, mean CO₂ emissions are modelled within authority–age–rooms groups, adjusting for both building age and dwelling size.
 
-We have been asked by a local company to determine whether some local authorities are better than others in terms of reducing the carbon footprint of properties in their area.  However, some authorities have older housing stock which is innately has a larger carbon footprint. Likewise, some have larger properties than others.  The initial brief is to carry out an aggregate data analysis where the unit of analysis is a local authority.  We have been asked to consider the average carbon footprint of a house in a given area conditional on being pre- or post-1930 and having between 1 and 10 heated rooms.  This should let you fit a model which has fixed effects for the number of houses of pre-1930, post-1930 and 1, 2, 3, ..., 10 heated rooms
+The analysis is conducted at the local authority level rather than at the level of individual properties. The objective is not to predict emissions for a single dwelling, but to compare authorities on a more comparable basis after adjusting for systematic differences in housing age and size.
+
+Formally, the model is specified as:
 
 
 $$Y_{ji} = \beta_0 + \beta_1 x_{j}^{(\text{old})} + \sum_{r=1}^{10} \beta_r x_{j}^{(r)} + \gamma_j$$
 
-Where 
+Where $Y_{ji}$ denotes the average carbon dioxide emissions for authority $j$ within housing group $i$ (defined by age category and number of rooms). The terms $x_{j}^{(\text{old})}$ and $x_{j}^{(r)}$ represent the composition of older homes and room counts within authority $j$, with $\beta_0$, $\beta_1$, and $\beta_r$ capturing fixed effects. The random effect $\gamma_j$ captures authority-specific deviations from the adjusted overall mean.
 
-- $Y_{ji}$ is the average carbon dioxide emissions for authority $j$ for each house type $i$ (old/new, 1, 2, ..., 10 rooms)
-- $x_{j}^{(old)}$ is the number of houses that are older than 1930 in authority $j$
-- $x_{j}^r$ are the number of houses with $r=1, 2, ..., 10$ rooms in authority $j$ 
-- $\beta_0$, $\beta_1$, $\beta_r$ are the fixed effects
-- $\gamma_j$ is the random effect for local authority $j$
-
-
-
+Together, the fixed effects describe average differences associated with age and room count, while the random effect reflects how each authority sits above or below the expected emissions level after adjustment.
 
 ## The Data
 
-Some initial exploratory data analysis shows us how the carbon emissions vary by age of property and by the number of rooms:
+In this dataset, the outcome variable `shortfall` is derived from `co2_emissions_current` in the EPC records and represents mean CO₂ emissions after aggregation within each local authority, age group, and room count.
 
+The variables are constructed as follows:
 
+- `age` is a two-level category based on `construction_age_estimated`, with properties built before 1930 labelled as “Old” and those built from 1930 onwards labelled as “Recent”.
+- `n_rooms` is derived from `number_heated_rooms`, retaining values from 1 to 9 and grouping all values of 10 or above into a single category.
+- `local_authority_code` is taken from the EPC field `local_authority` and is used to group properties by area.
 
-![](../../data_cache/vignettes/regression/boxplot_age.html){width="100%" height="600px"}
+Each row in `la_energy.csv` corresponds to one aggregated group defined by a local authority × age group × room count combination. The value of `shortfall` is the mean CO₂ emissions for that group, and `n` records the number of EPC certificates contributing to the mean.
 
-![](../../data_cache/vignettes/regression/boxplot_rooms.html){width="100%" height="600px"}
+Initial exploratory analysis illustrates how average CO₂ emissions vary with property age and heated room count.
 
+![](./figures/reg_boxplot_age.png){width="100%"}
 
-## The model
+![](./figures/reg_boxplot_rooms.png){width="100%"}
+Across the two boxplots, older properties tend to exhibit higher average emissions than more recent ones, although substantial overlap remains across authorities and room counts. Emissions also increase with the number of heated rooms, supporting the inclusion of room count as an important adjustment variable in the model.
 
-A model can be fitted and a summary of the fixed effects produced
+Because the data are aggregated, each point in the boxplots represents a group mean rather than an individual property. These plots are therefore used as a high-level summary prior to model fitting.
 
+## Methods
+
+I work with an aggregated dataset in which each observation represents a local authority, stratified by property age group (pre-1930 vs post-1930) and the number of heated rooms (1–10). A linear mixed-effects model is fitted with fixed effects for property age and room count, alongside a random intercept for local authority.
+
+This specification allows authorities to be compared on a more comparable basis, accounting for systematic differences in housing age and dwelling size that strongly influence average emissions. In this implementation, `n_rooms` is treated as a numeric predictor (1–10) to capture the overall increasing trend in emissions as the number of heated rooms rises.
+
+## Model results
+
+A linear mixed-effects model is fitted with `shortfall` as the response, `age` and `n_rooms` as fixed effects, and a random intercept for `local_authority_code`. This allows baseline emissions to vary across authorities while estimating age and room-count effects on a common scale.
+
+The model summary below reports the fixed-effect estimates and model fit statistics. To compare local authorities after adjustment, the authority-level random effects are examined in the next section and visualised using a caterpillar plot.
 
 ```{python}
 #| echo: false
@@ -65,16 +75,21 @@ with open('../../data_cache/vignettes/regression/model_fit.txt') as f:
 ```
 
 
-## The key insight
+## Local authority comparison (random effects)
 
-We've been asked to rate local authority performance, so the most important result is a ``caterpillar plot'' of the random effects.
+The caterpillar plot summarises the estimated random intercepts for each local authority, which are interpreted as deviations from the overall average emissions level after adjusting for property age group and the number of heated rooms.
 
+Authorities with more negative random effects exhibit lower average emissions than the model would predict given their housing composition, while those with more positive values exhibit higher emissions. The horizontal intervals indicate uncertainty around each estimate. Where an interval crosses zero, the authority is not clearly distinguishable from the overall average under this model, whereas intervals that remain entirely above or below zero indicate stronger evidence of above-average or below-average emissions after adjustment.
 
-![](../../data_cache/vignettes/regression/caterpillar.html){width="100%" height="600px"}
+![](./figures/reg_caterpillar.png){width="100%"}
 
-##  Additional credit
+The plot therefore provides a clear visual comparison of authority-level emissions performance, while also highlighting where uncertainty limits the strength of any conclusions.
 
-For additional credit you might like to enhance the exploratory data analysis. You could consider residual diagnostics to check the validity of the model fit. You may also like to consider the appropriateness of the adjusting variables age and number of rooms. You could consider extracting further variables from the database and fitting a slightly more elaborate model.
+## Conclusion
+
+Average CO₂ emissions vary strongly with property age and the number of heated rooms, making adjustment for these factors essential when comparing local authorities. After adjustment, the estimated random effects show that some authorities consistently sit above or below the overall average, indicating relatively higher or lower emissions than would be expected given their housing composition.
+
+At the same time, the model remains a simplified representation based on aggregated data and a limited set of adjustment variables. The random effects are therefore best interpreted as a comparative summary rather than a definitive or causal explanation of why particular authorities perform better or worse.
 
 
 ## Record of AI use for MTHM503 Regression coursework
@@ -84,9 +99,9 @@ Instructions: You can use this document to record when, how and why you used Gen
 | **Date**       | **AI tool used** | **Purpose**                                | **Prompt**                                 | **Hyperlink to output (where possible)** | **Section of work used for** |
 |----------------|------------------|--------------------------------------------|--------------------------------------------|------------------------------------------|-------------------------------|
 | E.g. 15/07/2025| MS Copilot       | To help create an organised essay structure| ‘Generate ideas for structuring an essay on...’ | [insert link]                          | introduction                  |
-|                |                  |                                            |                                            |                                          |                               |
-|                |                  |                                            |                                            |                                          |                               |
-|                |                  |                                            |                                            |                                          |                               |
+| 24/12/2025     |  ChatGPT         | To resolve plot embedding issues                                         |  Plots render as not found in HTML; advise whether iframe works for submission                                 |                                          |  report formatting               |
+| 24/12/2025   |  ChatGPT           |  To explain key concepts to park for later learning                     |  Explain random effects in detail                              |                                          |  Understanding               |
+| 25/12/25     |  ChatGPT           | Identify causes of plot embedding issues and suggest stable alternatives                 |  Plots not displaying correctly in rendered HTML. Explain common causes and advise whether PNG export is more reliable than iframes for submission                         |                                          |   report formatting                            |
 |                |                  |                                            |                                            |                                          |                               |
 |                |                  |                                            |                                            |                                          |                               |
 |                |                  |                                            |                                            |                                          |                               |

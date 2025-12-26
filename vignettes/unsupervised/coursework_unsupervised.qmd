@@ -7,45 +7,33 @@ format:
 
 ---
 
-## Your task
+## Introduction
 
-This material is provided as context to the problem. You should rewrite it as you see fit.  IN particular, you should demonstrate you understand why we are undertaking a cluster analysis, and what the various methods are telling us.  In particular, you should explain how principal components helps us visualise the results of the clustering.
+This report examines whether local authorities in Great Britain exhibit distinct collision profiles by clustering them based on the proportions of several crash subtypes, including road type, weather, lighting conditions, and injury severity.
 
+Clustering is used to identify whether authorities naturally group into a small number of recurring patterns, rather than to predict predefined labels. If areas share similar collision contexts, they can be compared more meaningfully and may benefit from more targeted interventions.
+
+To support interpretation, PCA is applied after clustering to project the multi-variable patterns into two dimensions. This allows cluster structure and separation to be visualised and checked in a 2D space.
 
 ## The Problem
 
 Police recorded data in Great Britain is called "Stats19" and is available at <https://www.data.gov.uk/dataset/cb7ae6f0-4be6-4935-9277-47e5ce24a11f/road-accidents-safety-data>.  These data are typically split into three linked tables:
 
-- Accidents
+### Accidents
 
-  Each row represents a single reported accident. Key fields include:
+Each row represents a single reported accident and includes information such as the date and time, location (for example, latitude/longitude and local authority), road type and conditions, weather and lighting, and the number of vehicles and casualties involved.
 
-  - Date and time
-  - Location (e.g. latitude/longitude, local authority)
-  - Road type and conditions
-  - Weather and lighting
-  - Number of vehicles and casualties
+### Vehicles
 
-- Vehicles
+Each row corresponds to a vehicle involved in an accident and contains details on vehicle type and age, manoeuvre and direction, as well as driver characteristics such as age and sex.
 
-  Each row represents a vehicle involved in an accident. Includes:
-
-  - Vehicle type and age
-  - Manoeuvre and direction
-  - Driver age and sex
-
-- Casualties
+### Casualties
   
-  Each row represents a person injured or killed. Includes:
-
-  - Casualty type (pedestrian, cyclist, driver, etc.)
-  - Severity (slight, serious, fatal)
-  - Age, sex, and mode of transport
+Each row represents an injured or deceased person and records casualty type (for example, pedestrian, cyclist, or driver), injury severity, and demographic information.  
 
 These tables are linked via a unique accident index.
 
-
-We are interested in creating clusters of like authorities based on the kinds of collisions that occur in their area.  You have been given a count of the number of collisions at Mini-roundabout, in the Rain, in the Dark, when the road is Dry, in an urban setting and where the most seriously injured casualty was reported as having a slight injury.
+The focus of this analysis is to identify groups of local authorities with similar collision profiles. Clustering is applied using counts of collisions occurring under specific contexts, including mini-roundabouts, rainy conditions, darkness, dry roads, urban settings, and accidents where the most severe injury was classified as slight.
 
 Some previous cluster analysis work has been reported at:
 
@@ -55,65 +43,71 @@ Some previous cluster analysis work has been reported at:
 
 ## The Data
 
-The first thing we can do is consider a scatterplot of the data
+The scatterplot matrix provides an overview of how collision proportions vary together across local authorities. Each point represents a local authority, with each panel showing a pairwise relationship between two variables.
 
-![](../../data_cache/vignettes/unsupervised_classification/scatterplot.html){width="100%" height="600px"}
+![](./figures/unsup_scatterplot.png){width="100%"}
 
-We are going to use the proportion of each subtype of collision that was reported, and rescale the variables.
+Before clustering, the variables were rescaled and expressed as proportions rather than raw counts. This ensures that no single variable with a larger variance dominates the distance calculations, allowing the clustering to reflect relative patterns across collision contexts more fairly.
+
+Several variable pairs display clearer structure than others. For example, the proportions of dry-road collisions (`n_dry`) and slight-injury outcomes (`n_slight`) show a moderate positive association, with authorities that have more dry-road collisions also tending to report higher proportions of slight injuries. While this does not imply causation, it indicates that certain collision contexts tend to co-occur within the same areas, supporting the use of clustering to identify broader patterns.
+
+## Method
+
+Each local authority is treated as a single observation, described by several collision-context variables, including proportions for mini-roundabout, rain, dark, dry road, urban setting, and slight injury.
+
+As these variables are measured on different scales, they are first rescaled and standardised so that no single feature dominates the distance calculations due to its numerical range. This ensures that clustering is driven by relative patterns across collision contexts rather than absolute magnitudes.
+
+Two clustering approaches are then applied. First, hierarchical clustering using Ward’s method is used to iteratively merge similar authorities and construct a dendrogram. The dendrogram is cut at a height of 20, resulting in four clusters. This provides a small and interpretable set of groups while still separating clearly different collision patterns.
+
+Second, k-means clustering is fitted with four clusters to allow direct comparison with the hierarchical solution. The resulting clusters are interpreted using centroid plots, which summarise the typical collision-context profile associated with each group.
+
+Finally, principal component analysis (PCA) is applied to the standardised variables to project the multi-dimensional structure into two dimensions. The first two principal components are used to visualise cluster membership and help assess how the identified clusters are distributed in a lower-dimensional space.
 
 
 ## Hierarchical clustering
 
+Hierarchical clustering is applied to group local authorities based on similarities in their collision profiles. The resulting dendrogram shows how authorities are merged step by step, with larger merge heights indicating more dissimilar groups.
 
-The first task is to perform hierarchical clustering.
+![](./figures/unsup_dendrogram.png){width="100%"}
 
-![](../../data_cache/vignettes/unsupervised_classification/dendrogram.html){width="100%" height="600px"}
+To obtain a practical clustering solution, the dendrogram is cut at a height of 20, resulting in four clusters. This cut-point balances interpretability and separation: cutting higher would merge distinct patterns, while cutting lower would produce many small clusters that are difficult to summarise.
 
+![](./figures/unsup_hscatter.png){width="100%"}
+After assigning cluster labels, the standardised data are projected onto the first two principal components to visualise the clustering structure. In the PCA plot, some clusters are more clearly separated, while others show noticeable overlap. This reflects gradual variation in collision profiles across authorities, with the clusters capturing broad patterns rather than sharply distinct groups.
 
-You need to select a suitable ``cut-point'' and cut the tree at an appropriate height to form a number of clusters.
+## K-means clustering
 
-To aid visualisation of results, you should plot the cluster membership on a scatterplot of the first two principal components.
+K-means clustering assigns each local authority to the nearest cluster centroid after choosing a fixed number of clusters. In this analysis, k is set to four in order to align with the hierarchical clustering solution and allow for direct comparison between the two methods.
 
+The centroid plots summarise the typical collision profile associated with each cluster across variables. Clear differences in centroid shapes indicate that the clusters capture meaningful variation in collision contexts rather than reflecting arbitrary groupings.
 
-![](../../data_cache/vignettes/unsupervised_classification/kscatter.html){width="100%" height="600px"}
+![](./figures/unsup_kcentroids1.png){width="100%"}
 
+![](./figures/unsup_kcentroids2.png){width="100%"}
 
-## kmeans clustering
+The resulting clusters show distinct patterns. Cluster 2 is characterised by relatively higher values of `n_urban` and `n_slight`, indicating a stronger association with urban settings and slight-injury outcomes. Cluster 0, by contrast, displays higher and more balanced values across `n_dry`, `n_urban`, and `n_slight`, reflecting a more mixed profile in which several contexts are consistently common. Other clusters exhibit their own characteristic patterns, but these examples illustrate how centroid plots translate cluster labels into interpretable summaries.
 
+The k-means cluster labels are also projected onto the first two principal components to visualise the clustering structure.
 
-The second task is to perform k-means clustering. You should select an appropriate number of clusters.
-First, you should look at the cluster centroids:
+![](./figures/unsup_kscatter.png){width="100%"}
+Comparing this PCA representation with the hierarchical clustering plot shows that the main groupings are broadly consistent across methods. Where differences appear, they suggest that collision profiles vary along a continuum, with the two algorithms partitioning the same structure in slightly different ways.
 
+## Conclusion
 
-![](../../data_cache/vignettes/unsupervised_classification/kcentroids1.html){width="100%" height="600px"}
+The analysis shows that local authorities can be grouped into a small number of broadly similar collision-pattern types based on the selected context proportions. Hierarchical clustering helps reveal the global structure through the dendrogram, while k-means provides clearer centroid profiles for interpreting each cluster.
 
+PCA is used primarily as a visualisation tool to project the multi-dimensional patterns into two dimensions. This makes it easier to assess whether the resulting clusters form reasonably coherent groups. Some overlap remains, reflecting both the dimensionality reduction and the gradual nature of real-world collision patterns.
 
-![](../../data_cache/vignettes/unsupervised_classification/kcentroids2.html){width="100%" height="600px"}
-
-
-As before you should plot the cluster membership on a scatterplot of the first two principal components.
-
-![](../../data_cache/vignettes/unsupervised_classification/kscatter.html){width="100%" height="600px"}
-
-
-
-
-
-##  Additional credit
-
-For additional credit you should consider adding a further unsupervised classification method. Alternatively, you could increase the number of variables used in the clustering.
-
+If the analysis were extended, incorporating additional collision-related variables or external contextual information, such as road network characteristics or exposure measures, could help improve interpretation of why certain authorities cluster together.
 
 
 ## Record of AI use for MTHM503 unsupervised coursework
 
-Instructions: You can use this document to record when, how and why you used GenAI to complete your assessment. It will help you create a record of AI use to submit alongside your references for AI-integrated and AI-assisted assignments. It may also be useful to help you discuss your AI use if you are required to do so in an academic conduct meeting.
-
 | **Date**       | **AI tool used** | **Purpose**                                | **Prompt**                                 | **Hyperlink to output (where possible)** | **Section of work used for** |
 |----------------|------------------|--------------------------------------------|--------------------------------------------|------------------------------------------|-------------------------------|
 | E.g. 15/07/2025| MS Copilot       | To help create an organised essay structure| ‘Generate ideas for structuring an essay on...’ | [insert link]                          | introduction                  |
-|                |                  |                                            |                                            |                                          |                               |
-|                |                  |                                            |                                            |                                          |                               |
+| 23/12/2025     | ChatGPT          | To fix report rendering and figure visibility issues          | How to embed plots and export figures from HTML to PNG when rendered plots broke in Quarto    |                                          |  report formatting                             |
+| 23/12/2025      |   ChatGPT               |   Clarifying ML concepts and methods used in the project                                       |  Explain metrics such as precision, recall, F1, and ROC more in detail                                          |                                  |   Method understanding                            |
 |                |                  |                                            |                                            |                                          |                               |
 |                |                  |                                            |                                            |                                          |                               |
 |                |                  |                                            |                                            |                                          |                               |

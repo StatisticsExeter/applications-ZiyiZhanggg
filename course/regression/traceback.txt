@@ -1,0 +1,28 @@
+﻿I'm sorry, but an uncaught exception occurred.
+
+Before loading the script.
+NotADirectoryError: [WinError 267] 目录名称无效。: 'C:\\Users\\Lenovo\\Documents\\applications-ZiyiZhanggg\\course\\regression\\fit_model.py'
+
+-- Full Traceback ------------------------------------------------------------
+
+Full traceback:
+  File "D:\renpy-8.1.3-sdk\renpy\bootstrap.py", line 359, in bootstrap
+    renpy.main.main()
+  File "D:\renpy-8.1.3-sdk\renpy\main.py", line 403, in main
+    renpy.loader.index_archives()
+  File "D:\renpy-8.1.3-sdk\renpy\loader.py", line 258, in index_archives
+    for _dir, fn in listdirfiles():
+  File "D:\renpy-8.1.3-sdk\renpy\loader.py", line 444, in listdirfiles
+    scandirfiles()
+  File "D:\renpy-8.1.3-sdk\renpy\loader.py", line 344, in scandirfiles
+    i(add, seen)
+  File "D:\renpy-8.1.3-sdk\renpy\loader.py", line 415, in scandirfiles_from_filesystem
+    for j in walkdir(i):
+  File "D:\renpy-8.1.3-sdk\renpy\loader.py", line 271, in walkdir
+    for i in os.listdir(dir):
+NotADirectoryError: [WinError 267] 目录名称无效。: 'C:\\Users\\Lenovo\\Documents\\applications-ZiyiZhanggg\\course\\regression\\fit_model.py'
+
+Windows-10-10.0.26100 AMD64
+Ren'Py 8.3.2.24090902
+ 
+Fri Dec 26 04:22:00 2025
