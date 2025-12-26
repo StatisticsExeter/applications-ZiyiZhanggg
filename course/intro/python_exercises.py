@@ -29,7 +29,7 @@ def filter_even(numbers):
 def get_fifth_row(df):
     """Given a dataframe 'df'
     return the fifth row of this as a pandas DataFrame."""
-    return df.iloc[[4]]
+    return df.iloc[4]
 
 
 def column_mean(df, column):
@@ -49,11 +49,11 @@ def count_occurrences(lst):
     return a dictionary with counts of each unique element in the list."""
     counts = {}
     for item in lst:
-      if item in counts:
-        count[item] += 1
-      else:
-        count[item] = 1
-    return d.set(lst)
+        if item in counts:
+            counts[item] += 1
+        else:
+            counts[item] = 1
+    return counts
 
 
 def drop_missing(df):
@@ -65,4 +65,7 @@ def drop_missing(df):
 def value_counts_df(df, column):
     """Given a dataframe 'df' with various columns and the name of one of those columns 'column',
     return a DataFrame with value counts of the specified column."""
-     return df[column].value_counts().to_frame()
+    vc = df[column].value_counts()
+    out = vc.reset_index()
+    out.columns = [column, "count"]
+    return out
