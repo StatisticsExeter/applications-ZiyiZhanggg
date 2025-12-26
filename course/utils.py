@@ -11,7 +11,7 @@ import textwrap
 try:
     from doit.exceptions import TaskFailed
 except ModuleNotFoundError:
-    TaskFailed = RuntimeError
+    TaskFailed = Exception
 
 
 
