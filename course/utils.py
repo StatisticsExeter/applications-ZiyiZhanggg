@@ -1,11 +1,18 @@
 from pathlib import Path
 from dotenv import load_dotenv
 import os
-import psycopg2
+try:
+    import psycopg2
+except ModuleNotFoundError:
+    psycopg2 = None
 import pandas as pd
 import sys
 import textwrap
-from doit.exceptions import TaskFailed
+try:
+    from doit.exceptions import TaskFailed
+except ModuleNotFoundError:
+    TaskFailed = RuntimeError
+
 
 
 def warn_if_in_rstudio():
@@ -73,6 +80,10 @@ def load_db_config(env_path=None):
 
 
 def get_db_connection(config):
+    if psycopg2 is None:
+        raise ModuleNotFoundError(
+            "psycopg2 is not installed in this environment, so database access is unavailable."
+        )
     return psycopg2.connect(**config)
 
 
